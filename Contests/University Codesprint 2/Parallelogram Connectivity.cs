@@ -18,44 +18,53 @@ class Solution {
         int q = Convert.ToInt32(Console.ReadLine());
         int[,] visited = new int[n,m];
         int count = 0;
+        vec start = new vec(0,0);
+        vec end = new vec(n-1, m-1);
         for(int i = 0; i < n; i++)
-            {
+        {
                 for(int j = 0; j < m; j++)
                 {
                     if(visited[i, j] == 0)
                     {
                         count++;
-                        visited = bfs(board, visited, i, j, n-1, m-1, count);
+                        visited = bfs(board, visited, new vec(i,j), start, end, count);
                     }
                 }
           }
-        for(int i = 0; i < n; i++)
+       /* for(int i = 0; i < n; i++)
         {
             for(int j = 0; j < m; j++)
                 Console.Write(board[i][j] + " ");
             Console.WriteLine();
-        }
-        for(int i = 0; i < n; i++)
-        {
-            for(int j = 0; j < m; j++)
-                Console.Write(visited[i,j] + " ");
-            Console.WriteLine();
-        }
+        }*/
+        
         
         for(int a0 = 0; a0 < q; a0++){
             string[] tokens_x1 = Console.ReadLine().Split(' ');
-            int x1 = n - Convert.ToInt32(tokens_x1[0]);
+            int x2 = n - Convert.ToInt32(tokens_x1[0]);
             int y1 = Convert.ToInt32(tokens_x1[1])-1;
-            int x2 = n - Convert.ToInt32(tokens_x1[2]);
+            int x1 = n - Convert.ToInt32(tokens_x1[2]);
             int y2 = Convert.ToInt32(tokens_x1[3])-1;
-            // your code goes here
-            var hash = new HashSet<int>();
-            int
-            for(int i = x2; i <= x1; i++)
+            int[,] visit = (int[,])visited.Clone();
+            for(int x = x1; x <= x2; x++)
             {
-                for(int j = y1; j <= y2; j++)
+                for(int y = y1; y <= y2; y++)
                 {
-                   hash.Add(visited[i,j]);
+                    //Console.WriteLine("("+x+","+y+")");
+                    if(x != x2 && y != y1 && visit[x,y] == visit[x+1, y-1])
+                    {
+                        visit = bfs(board, visit, new vec(x+1, y-1), new vec(x1, y1), new vec(x2, y2), count, visit[x,y]);
+                        count++;
+                    }
+                }
+                //Console.WriteLine("HERE in outer loop");
+            }
+            var hash = new HashSet<int>();
+            for(int x = x1; x <= x2; x++)
+            {
+                for(int y = y1; y <= y2; y++)
+                {
+                    hash.Add(visit[x,y]);
                 }
                 //Console.WriteLine("HERE in outer loop");
             }
@@ -64,23 +73,24 @@ class Solution {
         }
     }
     
-    static int[,] bfs(char[][] board, int[,] visited, int i, int j, int n, int m ,int count)
+    static int[,] bfs(char[][] board, int[,] visited, vec root, vec start, vec end ,int count, int countToCheck = 0)
     {
         Queue<vec> Q = new Queue<vec>();
-        var root =  new vec(i, j);
-        visited[i, j] = count;
+        visited[root.x, root.y] = count;
         Q.Enqueue(root);
         //Console.Write("\nIn bfs with root ("+root.x+","+root.y+")");
         while(Q.Count > 0)
         {
             
             var current = Q.Dequeue();
-            var neighbours = getNeighbours(current, n, m);
+            var neighbours = getNeighbours(current, start, end);
             //Console.Write("\nNeighbours of ("+current.x+","+current.y+")"+board[current.x][current.y]+" are ");
+            //foreach(var nb in neighbours)
+            //    Console.Write(" ("+nb.x+","+nb.y+")"/*+board[nb.x][nb.y]*/);
+            
             foreach(var nb in neighbours)
             {
-                //Console.Write(" ("+n.x+","+n.y+")"+board[n.x][n.y]);
-                if(visited[nb.x, nb.y] == 0 && board[current.x][current.y] == board[nb.x][nb.y])
+                if(visited[nb.x, nb.y] == countToCheck && board[current.x][current.y] == board[nb.x][nb.y])
                 {
                     visited[nb.x, nb.y] = count;
                     Q.Enqueue(nb);
@@ -92,39 +102,40 @@ class Solution {
         return visited;
     }
     
-    static List<vec> getNeighbours(vec current,int n, int m)
+    static List<vec> getNeighbours(vec current,vec start, vec end)
     {
         List<vec> nec = new List<vec>();
-        int li, lj, gi, gj;
-        li = current.x - 1;
-        lj = current.y - 1;
-        gi = current.x + 1;
-        gj = current.y + 1;
+        int lx, ly, gx, gy;
+        lx = current.x - 1;
+        ly = current.y - 1;
+        gx = current.x + 1;
+        gy = current.y + 1;
         
-        if(lj >= 0)
+        if(gx <= end.x)
         {
-            nec.Add(new vec(current.x, lj));
-            if(li >= 0)
+            nec.Add(new vec(gx, current.y));
+            if(gy <= end.y)
             {
-                nec.Add(new vec(li, lj));
-                nec.Add(new vec(li, current.y));
+                nec.Add(new vec(gx, gy));
+                nec.Add(new vec(current.x, gy));
             }
-        }else if(li >= 0)
+        }else if(gy <= end.y)
         {
-            nec.Add(new vec(li, current.y));
+            nec.Add(new vec(current.x, gy));
         }
-        if(gi <= n)
+        if(ly >= start.y)
         {
-            nec.Add(new vec(gi, current.y));
-            if(gj <= m)
+            nec.Add(new vec(current.x, ly));
+            if(lx >= start.x)
             {
-                nec.Add(new vec(gi, gj));
-                nec.Add(new vec(current.x, gj));
+                nec.Add(new vec(lx, ly));
+                nec.Add(new vec(lx, current.y));
             }
-        }else if(gj <= m)
+        }else if(lx >= start.x)
         {
-            nec.Add(new vec(current.x, gj));
+            nec.Add(new vec(lx, current.y));
         }
+        
         return nec;
     }
 }
